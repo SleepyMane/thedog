@@ -1,0 +1,58 @@
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-------------------------------------------------
+-- Instant Interaction (no duplicate hooks)
+-------------------------------------------------
+local HookedPrompts = setmetatable({}, { __mode = "k" }) -- weak keys = auto cleanup
+
+local function MakeInstant(prompt)
+    if not prompt:IsA("ProximityPrompt") then return end
+    if HookedPrompts[prompt] then return end
+    HookedPrompts[prompt] = true
+
+    pcall(function()
+        prompt:GetPropertyChangedSignal("Enabled"):Connect(function()
+            if prompt.Enabled then
+                prompt.HoldDuration = 0
+            end
+        end)
+
+        if prompt.Enabled then
+            prompt.HoldDuration = 0
+        end
+
+        prompt.PromptButtonHoldBegan:Connect(function()
+            if not prompt.Enabled then return end
+            prompt.HoldDuration = 0
+
+            if fireproximityprompt then
+                pcall(fireproximityprompt, prompt)
+            else
+                pcall(function()
+                    prompt:InputHoldBegin()
+                    task.wait(0.05)
+                    prompt:InputHoldEnd()
+                end)
+            end
+        end)
+    end)
+end
+
+for _, v in ipairs(workspace:GetDescendants()) do
+    MakeInstant(v)
+end
+
+workspace.DescendantAdded:Connect(MakeInstant)
+
+pcall(function()
+    ProximityPromptService.PromptShown:Connect(MakeInstant)
+end)
+
+print("Loaded Insta-Prompts")
