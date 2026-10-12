@@ -21,19 +21,16 @@ local function MakeInstant(prompt)
         prompt:GetPropertyChangedSignal("Enabled"):Connect(function()
             if prompt.Enabled then
                 prompt.HoldDuration = 0
-                prompt.MaxActivationDistance = math.huge
             end
         end)
 
         if prompt.Enabled then
             prompt.HoldDuration = 0
-            prompt.MaxActivationDistance = math.huge
         end
 
         prompt.PromptButtonHoldBegan:Connect(function()
             if not prompt.Enabled then return end
             prompt.HoldDuration = 0
-            promt.MaxActivationDistance = math.huge
 
             if fireproximityprompt then
                 pcall(fireproximityprompt, prompt)
